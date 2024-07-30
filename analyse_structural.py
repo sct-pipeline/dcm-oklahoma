@@ -35,8 +35,8 @@ METRICS = ['MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)', 'MEAN(eccentr
 
 METRICS_TO_YLIM = {
     'MEAN(diameter_AP)': (4, 9.3),
-    'MEAN(area)': (30, 95),
-    'MEAN(diameter_RL)': (8.5, 16),
+    'MEAN(area)': (25, 95),
+    'MEAN(diameter_RL)': (7.5, 16),
     'MEAN(eccentricity)': (0.6, 0.95),
     'MEAN(solidity)': (0.912, 0.999),
 }
