@@ -466,7 +466,6 @@ def main():
     # Analyse T2w perslice
     #################################################################
     logger.info('\nAnalysing T2w CSA perslice in PAM50 anatomical dimension')
-    filename = os.path.join(input_folder, "t2w_shape_PAM50.csv")
     df_t2_pam50 = read_t2w_pam50(input_folder)
     #get_number_subjects(df_t2_pam50, session)
 
