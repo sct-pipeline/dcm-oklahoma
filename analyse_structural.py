@@ -6,6 +6,7 @@
 # Author: Sandrine Bédard
 
 import os
+import re
 import logging
 import argparse
 import sys
@@ -72,7 +73,44 @@ def get_parser():
     return parser
 
 
-#def create_exclude_list():
+def fetch_participant_session_and_group(filename_path):
+    """
+    Get participant_id, session_id, and group (CSM/HC) from the file path
+
+    If the filename_path DOES NOT contain 'f', it means that it represents ses-01
+    If the filename_path contains 'f', it means that it represents ses-02
+    If the filename_path contains 'f2', it means that it represents ses-03
+
+    :param filename_path: e.g., '~/data/dcm-oklahoma/Long_Study_Results/sub-CSM048f/ses-spinalcord/anat/T2w/t2w_shape_PAM50_perslice.csv''
+    :return: participant_id: e.g., 'sub-CSM048'
+    :return: session_id: e.g., ses-01
+    :return: group: e.g., 'CSM' or 'HC'
+    """
+
+    participant_tmp = re.search('sub-(.*?)[_/]', filename_path)     # [_/] slash or underscore
+    participant_id = participant_tmp.group(0)[:-1] if participant_tmp else ""    # [:-1] removes the last underscore or slash
+    # REGEX explanation
+    # . - match any character (except newline)
+    # *? - match the previous element as few times as possible (zero or more times)
+
+    # Fetch session_id from participant_id (see the function docstring for more details)
+    if 'f2' in participant_id:
+        session_id = 'ses-03'
+    elif 'f' in participant_id:
+        session_id = 'ses-02'
+    else:
+        session_id = 'ses-01'
+
+    # Now, we can remove 'f' and 'f2' from the participant_id
+    participant_id = participant_id.replace('f2', '').replace('f', '')
+
+    # Fetch group
+    if 'CSM' in participant_id:
+        group = 'CSM'
+    elif 'HC' in participant_id:
+        group = 'HC'
+
+    return participant_id, session_id, group
 
 
 def format_pvalue(p_value, alpha=0.001, decimal_places=3, include_space=True, include_equal=True):
@@ -171,20 +209,27 @@ def get_vert_indices(df, vertlevel='VertLevel'):
 
 
 def read_t2w_pam50(folder):
-    dir_list = os.listdir(folder)
-    # Get only PAM50 csv files
-    dir_list = [file for file in dir_list if '.csv' in file]
-    print(dir_list)
+    """
+    Read CSV files with morphometrics normalized to PAM50 space
+    """
+    # Get recursively list of all t2w_shape_PAM50_perslice.csv files
+    files_list = [os.path.join(root, file) for root, _, files in os.walk(folder) for file in files if
+                  't2w_shape_PAM50_perslice.csv' in file]
+
+    # Read all CSV files and concatenate them
     combined_df = pd.DataFrame()
-    for file in dir_list:
+    for file in files_list:
         df = pd.read_csv(os.path.join(folder, file))
         combined_df = pd.concat([combined_df, df], ignore_index=True)
-    print(combined_df)
-    combined_df['participant_id'] = (combined_df['Filename'].str.split('/').str[-1]).str.replace('_T2w_seg.nii.gz', '')
-    combined_df['group'] = combined_df['participant_id'].str.split('_').str[-2].str.split('-').str[-1].str[0:2]
-    combined_df = combined_df[['participant_id', 'group', 'VertLevel', 'Slice (I->S)', 'MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)',
-           'MEAN(solidity)']].drop(0)
-    print(combined_df)
+
+    # Fetch participant and session using lambda function
+    combined_df['participant_id'], combined_df['session'], combined_df['group'] = (
+        zip(*combined_df['Filename'].map(lambda x: fetch_participant_session_and_group(x))))
+
+    # Keep only relevant columns
+    combined_df = combined_df[['participant_id', 'session', 'group', 'VertLevel', 'Slice (I->S)',
+                               'MEAN(area)', 'MEAN(diameter_AP)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)',
+                               'MEAN(solidity)']].drop(0)
     return combined_df
 
 
