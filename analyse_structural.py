@@ -235,23 +235,6 @@ def read_t2w_pam50(folder):
     return combined_df
 
 
-def read_t2w_pam50_old(fname, suffix='_T2w_seg.nii.gz', session=None, exclude_list=None):
-    data = pd.read_csv(fname)
-    # Filter with session first
-    data['participant_id'] = (data['Filename'].str.split('/').str[-1]).str.replace(suffix, '')
-    data['session'] = data['participant_id'].str.split('_').str[-1]
-    data['group'] = data['participant_id'].str.split('_').str[-2].str.split('-').str[-1].str[0:2]
-    # Drop subjects with id
-    if exclude_list:
-        for subject in exclude_list:
-            sub = (subject+'_'+ session)
-            logger.info(f'dropping {sub}')
-            data = data.drop(data[data['participant_id'] == sub].index, axis=0)
-    return data.loc[data['session'] == session]
-
-
-
-
 def get_number_subjects(df, session):
 
     list_subject = np.unique(df['participant_id'].to_list())
