@@ -53,7 +53,8 @@ METRIC_TO_AXIS = {
 
 PALETTE = {
     'sex': {'M': 'blue', 'F': 'red'},
-    'group': {'HC': 'blue', 'CS': '#e31a1c'}
+    'group': {'HC': 'blue', 'CSM': '#e31a1c'},
+    'session': {'ses-01': 'blue', 'ses-02': 'red', 'ses-03': 'green'}
     }
 
 LABELS_FONT_SIZE = 14
@@ -335,13 +336,15 @@ def avg_metrics(df, nb_slices=8, vertlevel='VertLevel', metric=None):
     df_avg['group'] = groups
     return df_avg
 
-def create_lineplot(df, hue, filename=None):
+def create_lineplot(df, hue, group_to_keep, fname_out):
     """
     Create lineplot for individual metrics per vertebral levels.
-    Note: we are ploting slices not levels to avoid averaging across levels.
+    Note: we are plotting slices not levels to avoid averaging across levels.
     Args:
         df (pd.dataFrame): dataframe with metric values
         hue (str): column name of the dataframe to use for grouping; if None, no grouping is applied
+        group_to_keep (str): group to keep ('CSM' or 'HC')
+        fname_out (str): output filename
     """
 
     #mpl.rcParams['font.family'] = 'Arial'
@@ -349,18 +352,36 @@ def create_lineplot(df, hue, filename=None):
     fig, axes = plt.subplots(1, 5, figsize=(25, 4))
     axs = axes.ravel()
 
+    # keep only CSM group
+    if group_to_keep == 'CSM':
+        df = df[df['group'] == 'CSM']
+    elif group_to_keep == 'HC':
+        df = df[df['group'] == 'HC']
+    # If no group is specified, keep both groups
+
     # Loop across metrics
     for index, metric in enumerate(METRICS):
         # Note: we are ploting slices not levels to avoid averaging across levels
-        if hue == 'sex' or hue=='group':
-            sns.lineplot(ax=axs[index], x="Slice (I->S)", y=metric, data=df, errorbar='sd', hue=hue, linewidth=2,
-                         palette=PALETTE[hue])
+        # Both groups, all sessions
+        if hue=='group':
+            sns.lineplot(ax=axs[index], x="Slice (I->S)", y=metric, data=df, errorbar='sd',
+                         hue=hue, # first grouping
+                         style='session', # second grouping
+                         linewidth=2, palette=PALETTE[hue])
             if index == 0:
                 axs[index].legend(loc='upper right', fontsize=TICKS_FONT_SIZE)
             else:
                 axs[index].get_legend().remove()
-        else:
-            sns.lineplot(ax=axs[index], x="Slice (I->S)", y=metric, data=df, errorbar='sd', hue=hue, linewidth=2)
+        # One group (CSM or HC), all sessions
+        elif hue=='session':
+            sns.lineplot(ax=axs[index], x="Slice (I->S)", y=metric, data=df, errorbar='sd',
+                         hue=hue, # first grouping
+                         #hue_order=['ses-01', 'ses-02', 'ses-03'],
+                         linewidth=2, palette=PALETTE[hue])
+            if index == 0:
+                axs[index].legend(loc='upper right', fontsize=TICKS_FONT_SIZE)
+            else:
+                axs[index].get_legend().remove()
 
         axs[index].set_ylim(METRICS_TO_YLIM[metric][0], METRICS_TO_YLIM[metric][1])
         ymin, ymax = axs[index].get_ylim()
@@ -401,13 +422,16 @@ def create_lineplot(df, hue, filename=None):
         # Move grid to background (i.e. behind other elements)
         axs[index].set_axisbelow(True)
 
-    # Save figure
-    if hue:
-        filename = 'lineplot_per' + hue + '.png'
+    # Add master title
+    if group_to_keep:
+        fig.suptitle(f'T2w metrics per slice for {group_to_keep}', fontsize=16)
     else:
-        filename = 'lineplot.png'
-    plt.savefig(filename, dpi=500, bbox_inches='tight')
-    logger.info('Figure saved: ' + filename)
+        fig.suptitle(f'T2w metrics per slice for both CSM and HC', fontsize=16)
+
+    # Save figure
+    plt.savefig(fname_out, dpi=500, bbox_inches='tight')
+    plt.close()
+    logger.info('Figure saved: ' + fname_out)
 
 
 def r_pvalues(df):
@@ -449,7 +473,15 @@ def main():
     # Keep only VertLevel from C2 to T1
     df_t2_pam50 = df_t2_pam50[df_t2_pam50['VertLevel'] <= 8]
     df_t2_pam50 = df_t2_pam50[df_t2_pam50['VertLevel'] > 1]
-    create_lineplot(df_t2_pam50, 'group')
+    # Both groups (CSM and HC), all sessions
+    fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_both_groups_all_sessions.png')
+    create_lineplot(df_t2_pam50, 'group', None, fname_out)
+    # CSM only, all sessions
+    fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_CSM_all_sessions.png')
+    create_lineplot(df_t2_pam50, 'session', 'CSM',fname_out)
+    # HC only, all sessions
+    fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_HC_all_sessions.png')
+    create_lineplot(df_t2_pam50, 'session', 'HC',fname_out)
     #compare_metrics_across_group(df_t2_pam50)
     # Aggregate metrics at disc levels:
     # TODO: do for all metrics
