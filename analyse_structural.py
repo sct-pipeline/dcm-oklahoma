@@ -454,7 +454,7 @@ def main():
     output_folder = args.o_folder
     # Create output folder if does not exist.
     if not os.path.exists(output_folder):
-        os.mkdir(output_folder)
+        os.makedirs(output_folder, exist_ok=True)
     os.chdir(output_folder)
     # Dump log file there
     if os.path.exists(FNAME_LOG):
