@@ -197,8 +197,9 @@ def get_vert_indices(df, vertlevel='VertLevel'):
     """
     # Get unique participant IDs
     subjects = df['participant_id'].unique()
+    sessions = df['session'].unique()
     # Get vert levels for one certain subject
-    vert = df[(df['participant_id'] == subjects[0]) & (df['session'] == 'ses-01')][vertlevel]
+    vert = df[(df['participant_id'] == subjects[0]) & (df['session'] == sessions[0])][vertlevel]
     # Get indexes of where array changes value
     ind_vert = vert.diff()[vert.diff() != 0].index.values
     # Get the beginning of C1
