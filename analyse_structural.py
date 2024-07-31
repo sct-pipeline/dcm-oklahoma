@@ -496,6 +496,10 @@ def main():
     # Keep only VertLevel from C2 to T1
     df_t2_pam50 = df_t2_pam50[df_t2_pam50['VertLevel'] <= 8]
     df_t2_pam50 = df_t2_pam50[df_t2_pam50['VertLevel'] > 1]
+
+    # Remove ses-03 (we have only a few subjects)
+    df_t2_pam50 = df_t2_pam50[df_t2_pam50['session'] != 'ses-03']
+
     # Both groups (CSM and HC), all sessions
     fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_both_groups_all_sessions.png')
     create_lineplot(df_t2_pam50, 'group', None, fname_out)
