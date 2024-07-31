@@ -356,9 +356,29 @@ def create_lineplot(df, hue, group_to_keep, fname_out):
     # keep only CSM group
     if group_to_keep == 'CSM':
         df = df[df['group'] == 'CSM']
+        # Keep only subjects with both ses-01 and ses-02
+        subjects_ses_01 = df[df['session'] == 'ses-01']['participant_id'].unique()
+        subjects_ses_02 = df[df['session'] == 'ses-02']['participant_id'].unique()
+        subjects = [subject for subject in subjects_ses_01 if subject in subjects_ses_02]
+        logger.info(f'Number of CSM participants with both ses-01 and ses-02: {len(subjects)}')
+        df = df[df['participant_id'].isin(subjects)]
+
     elif group_to_keep == 'HC':
         df = df[df['group'] == 'HC']
-    # If no group is specified, keep both groups
+        # Keep only subjects with both ses-01 and ses-02
+        subjects_ses_01 = df[df['session'] == 'ses-01']['participant_id'].unique()
+        subjects_ses_02 = df[df['session'] == 'ses-02']['participant_id'].unique()
+        subjects = [subject for subject in subjects_ses_01 if subject in subjects_ses_02]
+        logger.info(f'Number of HC participants with both ses-01 and ses-02: {len(subjects)}')
+        df = df[df['participant_id'].isin(subjects)]
+
+    elif group_to_keep == 'ses-01':
+        df = df[df['session'] == 'ses-01']
+    elif group_to_keep == 'ses-02':
+        df = df[df['session'] == 'ses-02']
+
+    num_of_unique_participants = len(df['participant_id'].unique())
+    logger.info(f'Number of unique participants after applying hue: {num_of_unique_participants}')
 
     # Loop across metrics
     for index, metric in enumerate(METRICS):
