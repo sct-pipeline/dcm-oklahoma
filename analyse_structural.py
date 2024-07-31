@@ -353,6 +353,9 @@ def create_lineplot(df, hue, group_to_keep, fname_out):
     fig, axes = plt.subplots(1, 5, figsize=(25, 4))
     axs = axes.ravel()
 
+    num_of_unique_participants = len(df['participant_id'].unique())
+    logger.info(f'Number of unique participants: {num_of_unique_participants}')
+
     # keep only CSM group
     if group_to_keep == 'CSM':
         df = df[df['group'] == 'CSM']
@@ -445,14 +448,14 @@ def create_lineplot(df, hue, group_to_keep, fname_out):
 
     # Add master title
     if group_to_keep:
-        fig.suptitle(f'T2w metrics per slice for {group_to_keep}', fontsize=16)
+        fig.suptitle(f'T2w metrics per slice for {group_to_keep} (n={num_of_unique_participants})', fontsize=16)
     else:
-        fig.suptitle(f'T2w metrics per slice for both CSM and HC', fontsize=16)
+        fig.suptitle(f'T2w metrics per slice for both CSM and HC (n={num_of_unique_participants})', fontsize=16)
 
     # Save figure
     plt.savefig(fname_out, dpi=500, bbox_inches='tight')
     plt.close()
-    logger.info('Figure saved: ' + fname_out)
+    logger.info(f'Figure saved: {fname_out}\n')
 
 
 def r_pvalues(df):
