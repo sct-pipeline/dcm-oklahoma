@@ -344,7 +344,7 @@ def create_lineplot(df, hue, group_to_keep, fname_out):
     Args:
         df (pd.dataFrame): dataframe with metric values
         hue (str): column name of the dataframe to use for grouping; if None, no grouping is applied
-        group_to_keep (str): group to keep ('CSM' or 'HC')
+        group_to_keep (str): group ('CSM' or 'HC') or session ('ses-01', 'ses-02', 'ses-03') to keep
         fname_out (str): output filename
     """
 
@@ -502,6 +502,13 @@ def main():
     # HC only, all sessions
     fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_HC_all_sessions.png')
     create_lineplot(df_t2_pam50, 'session', 'HC',fname_out)
+    # Session 1 only, both groups (CSM and HC)
+    fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_both_groups_ses-01.png')
+    create_lineplot(df_t2_pam50, 'group', 'ses-01', fname_out)
+    # Session 2 only, both groups (CSM and HC)
+    fname_out = os.path.join(output_folder, 'T2w_metrics_perslice_PAM50_both_groups_ses-02.png')
+    create_lineplot(df_t2_pam50, 'group', 'ses-02', fname_out)
+
     #compare_metrics_across_group(df_t2_pam50)
     # Aggregate metrics at disc levels:
     # TODO: do for all metrics
